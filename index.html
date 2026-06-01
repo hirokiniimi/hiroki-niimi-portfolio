@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hiroki Niimi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html" class="logo-text">Hiroki Niimi</a>
+    </div>
+    <nav>
+      <a href="index.html" class="active">Top</a>
+      <a href="about.html">About</a>
+      <a href="news.html">News</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="works-grid" id="works-grid"></div>
+  </main>
+
+  <footer>
+    <span class="footer-copy">&copy; Hiroki Niimi. All Rights Reserved.</span>
+  </footer>
+
+  <script>
+    fetch('/api/content').then(r => r.json()).then(data => {
+      const grid = document.getElementById('works-grid');
+      if (!data.works || !data.works.length) return;
+      grid.innerHTML = data.works.map(w => `
+        <a href="work.html?id=${w.id}" class="work-item">
+          ${w.thumbnail
+            ? `<img src="${w.thumbnail}" alt="${w.title}">`
+            : '<div class="thumb-placeholder"></div>'}
+          <div class="overlay">
+            <div class="work-info">
+              <div class="work-title">${w.title}</div>
+              <div class="work-year">${w.year}</div>
+            </div>
+          </div>
+        </a>
+      `).join('');
+    });
+  </script>
+</body>
+</html>

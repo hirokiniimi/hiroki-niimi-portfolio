@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News — Hiroki Niimi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html" class="logo-text">Hiroki Niimi</a>
+    </div>
+    <nav>
+      <a href="index.html">Top</a>
+      <a href="about.html">About</a>
+      <a href="news.html" class="active">News</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main class="page-content">
+    <p class="section-label">News</p>
+    <div class="news-grid" id="news-list"></div>
+  </main>
+
+  <footer>
+    <span class="footer-copy">&copy; Hiroki Niimi. All Rights Reserved.</span>
+  </footer>
+
+  <script>
+    fetch('/api/content').then(r => r.json()).then(data => {
+      const list = document.getElementById('news-list');
+      if (!data.news || !data.news.length) return;
+      list.innerHTML = data.news.map(n => `
+        <div class="news-card">
+          <div class="news-card-thumb">
+            ${n.image
+              ? `<img src="${n.image}" alt="">`
+              : '<div class="news-card-nothumb">No Image</div>'}
+          </div>
+          <div class="news-card-body">
+            <div class="news-card-date">${n.date}</div>
+            <div class="news-card-text">${n.text}</div>
+          </div>
+        </div>
+      `).join('');
+    });
+  </script>
+</body>
+</html>

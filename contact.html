@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Hiroki Niimi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <a href="index.html" class="logo-text">Hiroki Niimi</a>
+    </div>
+    <nav>
+      <a href="index.html">Top</a>
+      <a href="about.html">About</a>
+      <a href="news.html">News</a>
+      <a href="contact.html" class="active">Contact</a>
+    </nav>
+  </header>
+
+  <main class="page-content">
+    <p class="section-label">Contact</p>
+    <div class="contact-inner">
+      <p class="contact-intro">
+        お仕事のご依頼・展覧会のお問い合わせはこちらからお気軽にご連絡ください。<br>
+        For inquiries regarding commissions or exhibitions, please feel free to get in touch.
+      </p>
+
+      <!-- フォーム -->
+      <form class="contact-form" id="contact-form">
+        <div class="form-row">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-row">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-row">
+          <label for="subject">Subject</label>
+          <input type="text" id="subject" name="subject">
+        </div>
+        <div class="form-row">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required></textarea>
+        </div>
+        <div id="form-error" style="font-size:12px;color:#c00;margin-top:4px;display:none;"></div>
+        <button type="submit" class="btn-submit" id="submit-btn">Send</button>
+      </form>
+
+      <!-- 送信完了メッセージ -->
+      <div id="contact-success" style="display:none;">
+        <p style="font-size:13px;line-height:2;letter-spacing:0.04em;">
+          お問い合わせを受け付けました。<br>
+          Thank you for your message. We will get back to you shortly.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span class="footer-copy">&copy; Hiroki Niimi. All Rights Reserved.</span>
+  </footer>
+
+  <script>
+    document.getElementById('contact-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('form-error');
+      errEl.style.display = 'none';
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
+      try {
+        const r = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name:    document.getElementById('name').value,
+            email:   document.getElementById('email').value,
+            subject: document.getElementById('subject').value,
+            message: document.getElementById('message').value
+          })
+        });
+        const data = await r.json();
+        if (r.ok) {
+          document.getElementById('contact-form').style.display = 'none';
+          document.getElementById('contact-success').style.display = 'block';
+        } else {
+          errEl.textContent = data.error || '送信に失敗しました';
+          errEl.style.display = 'block';
+          btn.textContent = 'Send';
+          btn.disabled = false;
+        }
+      } catch {
+        errEl.textContent = 'ネットワークエラーが発生しました。再度お試しください。';
+        errEl.style.display = 'block';
+        btn.textContent = 'Send';
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

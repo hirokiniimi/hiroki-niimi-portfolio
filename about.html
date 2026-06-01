@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Hiroki Niimi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html" class="logo-text">Hiroki Niimi</a>
+    </div>
+    <nav>
+      <a href="index.html">Top</a>
+      <a href="about.html" class="active">About</a>
+      <a href="news.html">News</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main class="page-content">
+    <p class="section-label">About</p>
+
+    <div class="about-image" id="about-img-wrap" style="display:none">
+      <img id="about-img" src="" alt="Hiroki Niimi">
+    </div>
+
+    <div class="about-inner">
+      <p class="about-ja" id="about-ja"></p>
+      <div class="about-divider"></div>
+      <p class="about-en" id="about-en"></p>
+    </div>
+
+    <div id="cv-wrap" style="display:none">
+      <a id="cv-link" href="" download class="cv-download-btn">CV Download</a>
+    </div>
+  </main>
+
+  <footer>
+    <span class="footer-copy">&copy; Hiroki Niimi. All Rights Reserved.</span>
+  </footer>
+
+  <script>
+    fetch('/api/content').then(r => r.json()).then(data => {
+      const a = data.about || {};
+      if (a.image) {
+        document.getElementById('about-img').src = a.image;
+        document.getElementById('about-img-wrap').style.display = 'block';
+      }
+      if (a.ja) document.getElementById('about-ja').textContent = a.ja;
+      if (a.en) document.getElementById('about-en').textContent = a.en;
+      if (a.cvFile) {
+        document.getElementById('cv-link').href = a.cvFile;
+        document.getElementById('cv-wrap').style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

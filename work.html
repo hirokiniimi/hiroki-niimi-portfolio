@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work — Hiroki Niimi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <a href="index.html" class="logo-text">Hiroki Niimi</a>
+    </div>
+    <nav>
+      <a href="index.html" class="active">Top</a>
+      <a href="about.html">About</a>
+      <a href="news.html">News</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main class="work-detail">
+
+    <div class="work-hero">
+      <div class="work-hero-img" id="hero-img">
+        <div class="img-placeholder"></div>
+      </div>
+    </div>
+
+    <div class="work-meta-wrap">
+      <div class="work-meta">
+        <h1 class="work-detail-title" id="work-title"></h1>
+        <div class="work-detail-info">
+          <span class="work-detail-year" id="work-year"></span>
+          <span class="work-detail-medium" id="work-medium"></span>
+        </div>
+      </div>
+      <div class="work-description">
+        <p class="work-desc-ja" id="work-desc-ja"></p>
+        <p class="work-desc-en" id="work-desc-en"></p>
+      </div>
+    </div>
+
+    <div class="work-sub-images" id="work-sub-images"></div>
+
+    <div class="work-nav">
+      <a href="index.html" class="work-nav-back">← Back to Works</a>
+    </div>
+
+  </main>
+
+  <footer>
+    <span class="footer-copy">&copy; Hiroki Niimi. All Rights Reserved.</span>
+  </footer>
+
+  <script>
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) location.href = 'index.html';
+
+    fetch('/api/content').then(r => r.json()).then(data => {
+      const work = (data.works || []).find(w => w.id === id);
+      if (!work) { location.href = 'index.html'; return; }
+
+      document.title = `${work.title} — Hiroki Niimi`;
+
+      const hero = document.getElementById('hero-img');
+      if (work.thumbnail) hero.innerHTML = `<img src="${work.thumbnail}" alt="${work.title}">`;
+
+      document.getElementById('work-title').textContent  = work.title;
+      document.getElementById('work-year').textContent   = work.year;
+      document.getElementById('work-medium').textContent = work.medium;
+      document.getElementById('work-desc-ja').textContent = work.descJa;
+      document.getElementById('work-desc-en').textContent = work.descEn;
+
+      const subs = (work.images || []).filter(Boolean);
+      const subWrap = document.getElementById('work-sub-images');
+      if (subs.length) {
+        subWrap.innerHTML = subs.map(src => `
+          <div class="work-sub-img"><img src="${src}" alt=""></div>
+        `).join('');
+      } else {
+        subWrap.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

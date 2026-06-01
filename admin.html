@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Hiroki Niimi</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #000; --white: #fff; --gray: #888;
+      --light: #f5f5f5; --border: #e0e0e0;
+      --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    body { font-family: var(--font); background: var(--light); color: var(--black); font-size: 13px; }
+
+    /* ── Login ── */
+    #login {
+      position: fixed; inset: 0; display: flex;
+      align-items: center; justify-content: center; background: var(--white);
+    }
+    .login-box { width: 280px; }
+    .login-box h1 { font-size: 15px; font-weight: 400; letter-spacing: 0.04em; margin-bottom: 36px; line-height: 1.8; }
+    .login-box input {
+      display: block; width: 100%; border: none;
+      border-bottom: 1px solid var(--black); padding: 8px 0;
+      font-size: 13px; outline: none; background: transparent;
+      font-family: var(--font); margin-bottom: 24px;
+    }
+    .login-box .btn { width: 100%; }
+    .login-error { color: #c00; font-size: 11px; margin-top: 10px; letter-spacing: 0.04em; }
+
+    /* ── Dashboard ── */
+    #dashboard { display: none; height: 100vh; flex-direction: column; }
+
+    .admin-header {
+      height: 52px; background: var(--black); color: var(--white);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; flex-shrink: 0;
+    }
+    .admin-header-title { font-size: 12px; letter-spacing: 0.08em; }
+    .admin-header-right { display: flex; gap: 20px; align-items: center; }
+    .admin-header-right a {
+      color: rgba(255,255,255,0.55); text-decoration: none;
+      font-size: 11px; letter-spacing: 0.08em;
+    }
+    .admin-header-right a:hover { color: var(--white); }
+    .admin-header-right button {
+      background: none; border: 1px solid rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.65); padding: 5px 14px; cursor: pointer;
+      font-size: 11px; letter-spacing: 0.08em; font-family: var(--font);
+    }
+    .admin-header-right button:hover { color: var(--white); border-color: var(--white); }
+
+    .admin-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 160px; background: var(--white);
+      border-right: 1px solid var(--border);
+      padding: 28px 0; flex-shrink: 0;
+    }
+    .sidebar-btn {
+      display: block; width: 100%; text-align: left;
+      padding: 11px 24px; font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray);
+      background: none; border: none; border-left: 2px solid transparent;
+      cursor: pointer; font-family: var(--font);
+    }
+    .sidebar-btn:hover { color: var(--black); }
+    .sidebar-btn.active { color: var(--black); border-left-color: var(--black); }
+
+    /* ── Content area ── */
+    .admin-content { flex: 1; overflow-y: auto; padding: 36px 40px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Section header ── */
+    .sec-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .sec-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray); }
+
+    /* ── Buttons ── */
+    .btn {
+      background: var(--black); color: var(--white); border: none;
+      padding: 11px 22px; cursor: pointer; font-size: 11px;
+      letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--font);
+    }
+    .btn:hover { opacity: 0.7; }
+    .btn-sm { padding: 7px 14px; font-size: 10px; }
+    .btn-outline {
+      background: transparent; color: var(--black);
+      border: 1px solid var(--black);
+    }
+    .btn-outline:hover { background: var(--black); color: var(--white); opacity: 1; }
+    .btn-danger { background: #b00; }
+    .btn-danger:hover { opacity: 0.75; }
+
+    /* ── Works grid ── */
+    .works-grid-admin {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px;
+    }
+    .empty-msg { font-size: 12px; color: var(--gray); line-height: 1.8; }
+
+    .work-card {
+      background: var(--white); border: 1px solid var(--border);
+      cursor: pointer; overflow: hidden; transition: border-color 0.2s;
+    }
+    .work-card:hover { border-color: var(--black); }
+    .work-card-thumb {
+      position: relative; padding-top: 75%; background: var(--light);
+    }
+    .work-card-thumb img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    .work-card-thumb .no-img {
+      position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 10px; color: #ccc;
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .work-card-body { padding: 10px 12px; }
+    .work-card-title { font-size: 12px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .work-card-year { font-size: 10px; color: var(--gray); }
+
+    /* ── Work editor ── */
+    .editor-wrap { background: var(--white); border: 1px solid var(--border); padding: 32px; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gray); cursor: pointer; background: none; border: none;
+      padding: 0; font-family: var(--font); margin-bottom: 28px;
+    }
+    .back-btn:hover { color: var(--black); }
+
+    .form-row { margin-bottom: 22px; }
+    .form-row label {
+      display: block; font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--gray); margin-bottom: 7px;
+    }
+    .form-row input, .form-row textarea {
+      width: 100%; border: none; border-bottom: 1px solid var(--border);
+      padding: 7px 0; font-size: 13px; font-family: var(--font);
+      outline: none; background: transparent;
+    }
+    .form-row input:focus, .form-row textarea:focus { border-color: var(--black); }
+    .form-row textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
+    .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* ── Image upload ── */
+    .img-box {
+      position: relative; background: var(--light);
+      border: 1px dashed var(--border); overflow: hidden;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .img-box:hover { border-color: var(--black); }
+    .img-box.r169::before { content: ''; display: block; padding-top: 75%; }
+    .img-box .ib-inner {
+      position: absolute; inset: 0; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; pointer-events: none;
+    }
+    .img-box .ib-inner span { font-size: 10px; color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase; }
+    .img-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .img-box input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .img-box.filled .ib-inner { opacity: 0; transition: opacity 0.2s; }
+    .img-box.filled:hover .ib-inner {
+      opacity: 1; background: rgba(0,0,0,0.5);
+    }
+    .img-box.filled:hover .ib-inner span { color: var(--white); }
+    .sub-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .editor-actions {
+      display: flex; gap: 12px; margin-top: 32px;
+      padding-top: 24px; border-top: 1px solid var(--border); align-items: center;
+    }
+    .editor-actions .spacer { flex: 1; }
+
+    /* ── About ── */
+    .about-wrap { max-width: 760px; }
+
+    /* ── News ── */
+    .news-wrap { max-width: 680px; }
+    .news-row {
+      display: grid; grid-template-columns: 130px 56px 1fr auto;
+      gap: 12px; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .news-thumb-box {
+      width: 56px; height: 42px;
+      background: var(--light); border: 1px dashed var(--border);
+      position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0;
+    }
+    .news-thumb-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .news-thumb-box input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .news-thumb-box .add-icon {
+      position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 16px; color: #ccc; pointer-events: none;
+    }
+    .news-thumb-box.filled .add-icon { display: none; }
+    .news-row:first-child { border-top: 1px solid var(--border); }
+    .news-row input {
+      border: none; border-bottom: 1px solid transparent;
+      padding: 3px 0; font-size: 13px; font-family: var(--font);
+      outline: none; background: transparent; width: 100%;
+    }
+    .news-row input:focus { border-color: var(--black); }
+    .news-row-actions { display: flex; gap: 8px; white-space: nowrap; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--black); color: var(--white);
+      padding: 12px 20px; font-size: 11px; letter-spacing: 0.08em;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Uploading indicator ── */
+    .uploading { font-size: 10px; color: var(--gray); letter-spacing: 0.08em; margin-top: 4px; display: none; }
+    .uploading.show { display: block; }
+
+    /* ── Drag & Drop ── */
+    .drag-handle {
+      padding: 5px 12px;
+      text-align: center;
+      color: #ccc;
+      font-size: 11px;
+      letter-spacing: 4px;
+      border-bottom: 1px solid var(--border);
+      cursor: grab;
+      user-select: none;
+      transition: color 0.2s, background 0.2s;
+    }
+    .work-card:hover .drag-handle { color: #aaa; background: #fafafa; }
+    .work-card.dragging { opacity: 0.3; cursor: grabbing; }
+    .work-card.drag-over { outline: 2px solid var(--black); outline-offset: -2px; background: #fafafa; }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ── -->
+<div id="login">
+  <div class="login-box">
+    <h1>Hiroki Niimi<br>Admin</h1>
+    <input type="password" id="login-pw" placeholder="パスワード"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="btn" onclick="doLogin()">ログイン</button>
+    <div class="login-error" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ── Dashboard ── -->
+<div id="dashboard">
+  <header class="admin-header">
+    <span class="admin-header-title">Hiroki Niimi — Admin</span>
+    <div class="admin-header-right">
+      <a href="/" target="_blank">サイトを見る ↗</a>
+      <button onclick="doLogout()">ログアウト</button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+    <aside class="sidebar">
+      <button class="sidebar-btn active" onclick="showTab('works')">Works</button>
+      <button class="sidebar-btn" onclick="showTab('about')">About</button>
+      <button class="sidebar-btn" onclick="showTab('news')">News</button>
+    </aside>
+
+    <div class="admin-content">
+
+      <!-- Works -->
+      <div class="tab-panel active" id="tab-works">
+        <div class="sec-head">
+          <span class="sec-label">Works</span>
+          <button class="btn btn-sm" onclick="newWork()">＋ 新しい作品</button>
+        </div>
+        <div class="works-grid-admin" id="works-grid"></div>
+      </div>
+
+      <!-- About -->
+      <div class="tab-panel" id="tab-about">
+        <div class="sec-head"><span class="sec-label">About</span></div>
+        <div class="about-wrap">
+          <div class="form-row">
+            <label>紹介画像</label>
+            <div class="img-box r169" id="about-img-box">
+              <div class="ib-inner"><span>クリックして画像を選択</span></div>
+              <img id="about-img-preview" src="" style="display:none" alt="">
+              <input type="file" accept="image/*" onchange="uploadAboutImg(this)">
+            </div>
+            <span class="uploading" id="about-uploading">アップロード中...</span>
+          </div>
+          <div class="form-row">
+            <label>プロフィール（日本語）</label>
+            <textarea id="about-ja" rows="8"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Profile (English)</label>
+            <textarea id="about-en" rows="8"></textarea>
+          </div>
+          <div class="form-row">
+            <label>CV（PDFファイル）</label>
+            <div style="display:flex; align-items:center; gap:16px; padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <span id="cv-filename" style="font-size:12px; color:var(--gray); flex:1;">未設定</span>
+              <label style="cursor:pointer; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; background:var(--black); color:var(--white); padding:7px 16px; white-space:nowrap;">
+                PDFを選択
+                <input type="file" accept="application/pdf,.pdf" onchange="uploadCV(this)" style="display:none">
+              </label>
+            </div>
+            <span class="uploading" id="cv-uploading">アップロード中...</span>
+          </div>
+
+          <button class="btn" onclick="saveAbout()">保存する</button>
+        </div>
+      </div>
+
+      <!-- News -->
+      <div class="tab-panel" id="tab-news">
+        <div class="sec-head">
+          <span class="sec-label">News</span>
+          <button class="btn btn-sm" onclick="addNews()">＋ 追加</button>
+        </div>
+        <div class="news-wrap" id="news-list"></div>
+      </div>
+
+    </div><!-- /admin-content -->
+  </div><!-- /admin-body -->
+</div><!-- /dashboard -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+let content    = null;
+let editIdx    = null;
+let dragSrcIdx = null;
+
+// ───────────────────────────────
+// Init
+// ───────────────────────────────
+async function init() {
+  // file:// で開かれた場合はサーバーに接続できない
+  if (location.protocol === 'file:') {
+    const err = document.getElementById('login-err');
+    err.innerHTML = 'ファイルを直接開いています。<br>ターミナルで <b>npm start</b> を実行後、<br><b>http://localhost:3000/admin.html</b> を開いてください。';
+    err.style.lineHeight = '1.8';
+    return;
+  }
+  try {
+    const r = await fetch('/api/auth');
+    if (r.ok) { await loadContent(); showDashboard(); }
+    else        showLogin();
+  } catch {
+    const err = document.getElementById('login-err');
+    err.innerHTML = 'サーバーに接続できません。<br>ターミナルで <b>npm start</b> を実行してください。';
+    err.style.lineHeight = '1.8';
+  }
+}
+
+async function loadContent() {
+  const r = await fetch('/api/content');
+  content  = await r.json();
+  content.works = content.works || [];
+  content.about = content.about || { ja: '', en: '', image: '' };
+  content.news  = content.news  || [];
+}
+
+// ───────────────────────────────
+// Auth
+// ───────────────────────────────
+async function doLogin() {
+  const pw  = document.getElementById('login-pw').value;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  if (!pw) { err.textContent = 'パスワードを入力してください'; return; }
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    if (r.ok) {
+      await loadContent();
+      showDashboard();
+    } else {
+      const data = await r.json().catch(() => ({}));
+      err.textContent = data.error || 'パスワードが違います';
+    }
+  } catch {
+    err.innerHTML = 'サーバーに接続できません。<br>ターミナルで <b>npm start</b> を実行してください。';
+    err.style.lineHeight = '1.8';
+  }
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  location.reload();
+}
+
+// ───────────────────────────────
+// UI helpers
+// ───────────────────────────────
+function showLogin()     { document.getElementById('login').style.display = 'flex'; }
+function hideDashboard() { document.getElementById('dashboard').style.display = 'none'; }
+
+function showDashboard() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'flex';
+  renderWorks();
+  renderAbout();
+  renderNews();
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sidebar-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector(`.sidebar-btn[onclick="showTab('${name}')"]`).classList.add('active');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ───────────────────────────────
+// Save / Upload
+// ───────────────────────────────
+async function saveContent() {
+  const r = await fetch('/api/content', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(content)
+  });
+  if (!r.ok) throw new Error('保存失敗');
+}
+
+async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const r = await fetch('/api/upload', { method: 'POST', body: fd });
+  if (!r.ok) throw new Error('アップロード失敗');
+  return (await r.json()).path;
+}
+
+// ───────────────────────────────
+// Works — Drag & Drop
+// ───────────────────────────────
+function onDragStart(e, i) {
+  dragSrcIdx = i;
+  e.dataTransfer.effectAllowed = 'move';
+  const el = e.currentTarget;
+  setTimeout(() => el.classList.add('dragging'), 0);
+}
+
+function onDragOver(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.work-card').forEach(c => c.classList.remove('drag-over'));
+  if (i !== dragSrcIdx) e.currentTarget.classList.add('drag-over');
+}
+
+function onDrop(e, i) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (dragSrcIdx === null || dragSrcIdx === i) return;
+  const [moved] = content.works.splice(dragSrcIdx, 1);
+  content.works.splice(i, 0, moved);
+  dragSrcIdx = null;
+  renderWorks();
+  saveContent()
+    .then(() => toast('順番を保存しました'))
+    .catch(() => alert('保存に失敗しました'));
+}
+
+function onDragEnd(e) {
+  dragSrcIdx = null;
+  document.querySelectorAll('.work-card').forEach(c => {
+    c.classList.remove('dragging', 'drag-over');
+  });
+}
+
+// ───────────────────────────────
+// Works
+// ───────────────────────────────
+function renderWorks() {
+  const g = document.getElementById('works-grid');
+  if (!content.works.length) {
+    g.innerHTML = '<p class="empty-msg">まだ作品がありません。<br>「＋ 新しい作品」から追加してください。</p>';
+    return;
+  }
+  g.innerHTML = content.works.map((w, i) => `
+    <div class="work-card"
+      draggable="true"
+      ondragstart="onDragStart(event,${i})"
+      ondragover="onDragOver(event,${i})"
+      ondrop="onDrop(event,${i})"
+      ondragend="onDragEnd(event)"
+      onclick="openWork(${i})">
+      <div class="drag-handle" title="ドラッグして並び替え">⠿ ⠿ ⠿</div>
+      <div class="work-card-thumb">
+        ${w.thumbnail
+          ? `<img src="${esc(w.thumbnail)}" alt="">`
+          : '<div class="no-img">No Image</div>'}
+      </div>
+      <div class="work-card-body">
+        <div class="work-card-title">${esc(w.title) || '(タイトルなし)'}</div>
+        <div class="work-card-year">${esc(w.year) || '—'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function newWork() {
+  content.works.unshift({
+    id: `work-${Date.now()}`,
+    title: '', year: `${new Date().getFullYear()}`,
+    medium: '', descJa: '', descEn: '',
+    thumbnail: '', images: ['', '']
+  });
+  openWork(0);
+}
+
+function openWork(i) {
+  editIdx = i;
+  const w = content.works[i];
+  const panel = document.getElementById('tab-works');
+
+  panel.innerHTML = `
+    <button class="back-btn" onclick="closeWork()">← Works</button>
+    <div class="editor-wrap">
+
+      <div class="form-2col">
+        <div class="form-row">
+          <label>タイトル</label>
+          <input id="w-title" type="text" value="${esc(w.title)}">
+        </div>
+        <div class="form-row">
+          <label>年</label>
+          <input id="w-year" type="text" value="${esc(w.year)}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>素材・技法</label>
+        <input id="w-medium" type="text" value="${esc(w.medium)}">
+      </div>
+
+      <div class="form-row">
+        <label>説明（日本語）</label>
+        <textarea id="w-desc-ja" rows="4">${esc(w.descJa)}</textarea>
+      </div>
+
+      <div class="form-row">
+        <label>Description (English)</label>
+        <textarea id="w-desc-en" rows="4">${esc(w.descEn)}</textarea>
+      </div>
+
+      <div class="form-row">
+        <label>サムネイル画像</label>
+        <div class="img-box r169 ${w.thumbnail ? 'filled' : ''}" id="w-thumb-box">
+          <div class="ib-inner"><span>${w.thumbnail ? '変更する' : 'クリックして画像を選択'}</span></div>
+          ${w.thumbnail ? `<img src="${esc(w.thumbnail)}" alt="">` : ''}
+          <input type="file" accept="image/*"
+            onchange="handleWorkImg(this,'thumbnail','w-thumb-box')">
+        </div>
+        <span class="uploading" id="w-thumb-uploading">アップロード中...</span>
+      </div>
+
+      <div class="form-row">
+        <label>作品画像（サブ）</label>
+        <div class="sub-imgs">
+          ${[0,1].map(n => `
+            <div class="img-box r169 ${w.images[n] ? 'filled' : ''}" id="w-sub-${n}">
+              <div class="ib-inner"><span>${w.images[n] ? '変更する' : '画像を追加'}</span></div>
+              ${w.images[n] ? `<img src="${esc(w.images[n])}" alt="">` : ''}
+              <input type="file" accept="image/*"
+                onchange="handleWorkImg(this,'images.${n}','w-sub-${n}')">
+            </div>
+          `).join('')}
+        </div>
+        <span class="uploading" id="w-sub-uploading">アップロード中...</span>
+      </div>
+
+      <div class="editor-actions">
+        <button class="btn" onclick="saveWork()">保存する</button>
+        <button class="btn btn-outline" onclick="closeWork()">キャンセル</button>
+        <span class="spacer"></span>
+        <button class="btn btn-danger" onclick="deleteWork()">削除</button>
+      </div>
+    </div>
+  `;
+}
+
+async function handleWorkImg(input, field, boxId) {
+  const file = input.files[0];
+  if (!file) return;
+  const uploadingId = boxId.startsWith('w-sub') ? 'w-sub-uploading' : 'w-thumb-uploading';
+  const uploading = document.getElementById(uploadingId);
+  if (uploading) uploading.classList.add('show');
+  try {
+    const p = await uploadFile(file);
+    const box = document.getElementById(boxId);
+    let img = box.querySelector('img');
+    if (!img) { img = document.createElement('img'); box.appendChild(img); }
+    img.src = p;
+    box.classList.add('filled');
+    box.querySelector('.ib-inner span').textContent = '変更する';
+    if (field === 'thumbnail') {
+      content.works[editIdx].thumbnail = p;
+    } else {
+      const n = parseInt(field.split('.')[1]);
+      content.works[editIdx].images[n] = p;
+    }
+  } catch { alert('アップロードに失敗しました'); }
+  finally { if (uploading) uploading.classList.remove('show'); }
+}
+
+async function saveWork() {
+  const w    = content.works[editIdx];
+  w.title    = document.getElementById('w-title').value;
+  w.year     = document.getElementById('w-year').value;
+  w.medium   = document.getElementById('w-medium').value;
+  w.descJa   = document.getElementById('w-desc-ja').value;
+  w.descEn   = document.getElementById('w-desc-en').value;
+  try { await saveContent(); toast('保存しました'); closeWork(); }
+  catch { alert('保存に失敗しました'); }
+}
+
+async function deleteWork() {
+  if (!confirm('この作品を削除しますか？')) return;
+  content.works.splice(editIdx, 1);
+  try { await saveContent(); toast('削除しました'); closeWork(); }
+  catch { alert('削除に失敗しました'); }
+}
+
+function closeWork() {
+  editIdx = null;
+  const panel = document.getElementById('tab-works');
+  panel.innerHTML = `
+    <div class="sec-head">
+      <span class="sec-label">Works</span>
+      <button class="btn btn-sm" onclick="newWork()">＋ 新しい作品</button>
+    </div>
+    <div class="works-grid-admin" id="works-grid"></div>
+  `;
+  renderWorks();
+}
+
+// ───────────────────────────────
+// About
+// ───────────────────────────────
+function renderAbout() {
+  const a = content.about;
+  document.getElementById('about-ja').value = a.ja || '';
+  document.getElementById('about-en').value = a.en || '';
+  if (a.image) {
+    const box = document.getElementById('about-img-box');
+    const img = document.getElementById('about-img-preview');
+    img.src = a.image;
+    img.style.display = 'block';
+    box.classList.add('filled');
+  }
+  if (a.cvFile) {
+    const name = a.cvFile.split('/').pop();
+    document.getElementById('cv-filename').textContent = name;
+  }
+}
+
+async function uploadCV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const uploading = document.getElementById('cv-uploading');
+  uploading.classList.add('show');
+  try {
+    const p = await uploadFile(file);
+    content.about.cvFile = p;
+    document.getElementById('cv-filename').textContent = file.name;
+    toast('PDFをアップロードしました。「保存する」を押して確定してください。');
+  } catch { alert('アップロードに失敗しました'); }
+  finally { uploading.classList.remove('show'); }
+}
+
+async function uploadAboutImg(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const uploading = document.getElementById('about-uploading');
+  uploading.classList.add('show');
+  try {
+    const p = await uploadFile(file);
+    content.about.image = p;
+    const box = document.getElementById('about-img-box');
+    const img = document.getElementById('about-img-preview');
+    img.src = p; img.style.display = 'block';
+    box.classList.add('filled');
+  } catch { alert('アップロードに失敗しました'); }
+  finally { uploading.classList.remove('show'); }
+}
+
+async function saveAbout() {
+  content.about.ja = document.getElementById('about-ja').value;
+  content.about.en = document.getElementById('about-en').value;
+  try { await saveContent(); toast('保存しました'); }
+  catch { alert('保存に失敗しました'); }
+}
+
+// ───────────────────────────────
+// News
+// ───────────────────────────────
+function renderNews() {
+  const list = document.getElementById('news-list');
+  if (!content.news.length) {
+    list.innerHTML = '<p class="empty-msg">まだお知らせがありません。</p>';
+    return;
+  }
+  list.innerHTML = content.news.map((n, i) => `
+    <div class="news-row" id="nr-${i}">
+      <input type="text" value="${esc(n.date)}" placeholder="2024.01.01"
+        oninput="content.news[${i}].date = this.value">
+      <div class="news-thumb-box ${n.image ? 'filled' : ''}" id="news-tb-${i}">
+        ${n.image ? `<img src="${esc(n.image)}" alt="">` : '<span class="add-icon">+</span>'}
+        <input type="file" accept="image/*" onchange="uploadNewsImg(this, ${i})">
+      </div>
+      <input type="text" value="${esc(n.text)}" placeholder="お知らせのテキスト"
+        oninput="content.news[${i}].text = this.value">
+      <div class="news-row-actions">
+        <button class="btn btn-sm" onclick="saveNewsItem(${i})">保存</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteNews(${i})">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function uploadNewsImg(input, i) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const p = await uploadFile(file);
+    content.news[i].image = p;
+    const box = document.getElementById(`news-tb-${i}`);
+    box.classList.add('filled');
+    let img = box.querySelector('img');
+    if (!img) {
+      box.querySelector('.add-icon').remove();
+      img = document.createElement('img');
+      box.insertBefore(img, box.querySelector('input'));
+    }
+    img.src = p;
+    toast('画像をアップロードしました。「保存」を押して確定してください。');
+  } catch { alert('アップロードに失敗しました'); }
+}
+
+function addNews() {
+  content.news.unshift({ id: `news-${Date.now()}`, date: '', text: '' });
+  renderNews();
+  const first = document.querySelector('.news-row input');
+  if (first) first.focus();
+}
+
+async function saveNewsItem(i) {
+  try { await saveContent(); toast('保存しました'); }
+  catch { alert('保存に失敗しました'); }
+}
+
+async function deleteNews(i) {
+  if (!confirm('このお知らせを削除しますか？')) return;
+  content.news.splice(i, 1);
+  try { await saveContent(); toast('削除しました'); renderNews(); }
+  catch { alert('削除に失敗しました'); }
+}
+
+// ───────────────────────────────
+init();
+</script>
+</body>
+</html>
