@@ -6,7 +6,7 @@ const multer     = require('multer');
 const fs         = require('fs');
 const path       = require('path');
 const crypto     = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const rateLimit  = require('express-rate-limit');
 
 const app  = express();
@@ -20,16 +20,7 @@ const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
 const CONTACT_TO = 'niimi12hiroki10@gmail.com';
 
 // ── Mailer ──
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  family: 4, // IPv4強制（Railwayのネットワーク対応）
-  auth: {
-    user: CONTACT_TO,
-    pass: process.env.GMAIL_APP_PASSWORD
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234';
 
@@ -132,13 +123,13 @@ app.post('/api/contact', contactLimiter, async (req, res) => {
   if (!name || !email || !message) {
     return res.status(400).json({ error: '必須項目を入力してください' });
   }
-  if (!process.env.GMAIL_APP_PASSWORD) {
-    return res.status(500).json({ error: 'メール設定が未完了です（.env を確認してください）' });
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(500).json({ error: 'メール設定が未完了です' });
   }
   try {
-    await transporter.sendMail({
-      from: `"Hiroki Niimi Website" <${CONTACT_TO}>`,
-      replyTo: `"${name}" <${email}>`,
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
+      replyTo: `${name} <${email}>`,
       to: CONTACT_TO,
       subject: subject ? `[お問い合わせ] ${subject}` : `[お問い合わせ] ${name} 様より`,
       text: [
