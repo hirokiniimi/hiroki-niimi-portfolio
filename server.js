@@ -19,7 +19,10 @@ const CONTACT_TO = 'niimi12hiroki10@gmail.com';
 
 // ── Mailer ──
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  family: 4, // IPv4強制（Railwayのネットワーク対応）
   auth: {
     user: CONTACT_TO,
     pass: process.env.GMAIL_APP_PASSWORD
@@ -44,6 +47,7 @@ const contactLimiter = rateLimit({
 });
 
 // ── Middleware ──
+app.set('trust proxy', 1); // Railwayのリバースプロキシ対応
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname), { extensions: ['html'] }));
