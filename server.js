@@ -48,6 +48,9 @@ app.use(express.static(path.join(__dirname), { extensions: ['html'] }));
 // images ディレクトリを確保
 if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
+// IMAGES_DIR を /images として明示的に配信（DATA_DIR が __dirname 以外のときも対応）
+app.use('/images', express.static(IMAGES_DIR));
+
 // ── Auth helpers ──
 function getToken(req) {
   const cookie = req.headers.cookie || '';
