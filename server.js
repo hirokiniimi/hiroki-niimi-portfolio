@@ -1,4 +1,6 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first'); // IPv4を優先（Railway対応）
 const express    = require('express');
 const multer     = require('multer');
 const fs         = require('fs');
